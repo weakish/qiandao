@@ -4,6 +4,7 @@
 #
 # Copyright © 2016 Binux <roy@binux.me>
 
+import argparse
 import sys
 import logging
 import tornado.log
@@ -28,13 +29,15 @@ if __name__ == "__main__":
         channel.setLevel(logging.WARNING)
         logger.addHandler(channel)
 
-    if len(sys.argv) > 2 and sys.argv[1] == '-p' and sys.argv[2].isdigit():
-        port = int(sys.argv[2])
-    else:
-        port = config.port
+    argumentParser = argparse.ArgumentParser()
+    argumentParser.add_argument('-p', type=int, help='port', default=config.port)
+    argumentParser.add_argument('-b', help='bind IP address', default=config.bind)
+    arguments = argumentParser.parse_args()
+    port = arguments.p
+    bind = arguments.b
 
     http_server = HTTPServer(Application(), xheaders=True)
-    http_server.bind(port, config.bind)
+    http_server.bind(port, bind)
     http_server.start()
 
     worker = MainWorker()
@@ -42,5 +45,5 @@ if __name__ == "__main__":
     PeriodicCallback(worker, config.check_task_loop, io_loop).start()
     worker()
 
-    logging.info("http server started on %s:%s", config.bind, port)
+    logging.info("http server started on %s:%s", bind, port)
     IOLoop.instance().start()
